@@ -29,10 +29,14 @@ https://yandex.ru/search*, https://ya.ru/search*
 
 Чтобы пользоваться в инкогнито - просто разрешите расширению работать в нем (ПКМ по расширению - Управление расширениями - Разрешить использование в режиме инкогнито)
 
+<h2>Об авторе</h2>
 
+Автор: https://t.me/sc00d
+Канал: https://t.me/seregaseo
 
+***
 
-Код:
+<h2>Код</h2>
 
 ```// Массив с доменами второго уровня
 const myDomains = ['mydomain1.ru', 'mydomain2.com', 'mydomain3.pro'];
@@ -205,11 +209,8 @@ document.addEventListener('scroll', () => {
 // Функция для остановки наблюдения
 function stopObserving() {
   observer.disconnect();
-}```
+}
 
 
 
-***
 
-Автор: https://t.me/sc00d
-Канал: https://t.me/seregaseo
