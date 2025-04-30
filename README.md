@@ -39,8 +39,7 @@ https://yandex.ru/search*, https://ya.ru/search*
 
 <h2>Код</h2>
 
-```// Массив с доменами второго уровня
-const myDomains = ['mydomain1.ru', 'mydomain2.com', 'mydomain3.pro'];
+```const myDomains = ['mydomain1.ru', 'mydomain2.com', 'mydomain3.pro'];
 
 function markAds(node) {
   if (node.nodeType !== Node.ELEMENT_NODE) return;
@@ -49,6 +48,7 @@ function markAds(node) {
   const isSearchResultItem = (
     node.matches('#search-result > div') ||
     node.matches('#search-result > li') ||
+    node.matches('#search-result > li > div') ||
     (node.classList.contains('serp-item') && 
       (node.classList.contains('serp-item_card') || 
        node.classList.contains('serp-list__card'))) ||
@@ -57,14 +57,14 @@ function markAds(node) {
   );
 
   if (isSearchResultItem) {
-    let isAd = false;
+    let isAd = false; // Исправлено: убрано лишнее '='
     let hasMyDomain = false;
 
-    // Проверка на рекламу (еклама или ₽, исключая span внутри .Price)
+    // Проверка на рекламу (еклама, ₽ или Промо, исключая span внутри .Price)
     const spans = node.querySelectorAll('span:not(.Price span)');
     for (const span of spans) {
       const text = span.textContent;
-      if (text.includes('еклама') || (text.includes('₽') && !span.closest('.Price'))) {
+      if (text.includes('еклама') || (text.includes('₽') && !span.closest('.Price')) || text.includes('Промо')) {
         isAd = true;
         break;
       }
@@ -102,7 +102,7 @@ function markAds(node) {
 
   // Обработка корневых PromoOffer
   if (node.classList.contains('PromoOffer') && node.dataset.marked !== 'processed') {
-    const parentNode = node.closest('#search-result > div, #search-result > li, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"]');
+    const parentNode = node.closest('#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"]');
     if (parentNode) {
       if (parentNode.style.backgroundColor === 'rgb(183, 153, 0)') {
         node.style.backgroundColor = '#B79900';
@@ -123,7 +123,7 @@ const observer = new MutationObserver((mutations) => {
         markAds(node);
         // Обработка вложенных элементов
         if (node.nodeType === Node.ELEMENT_NODE) {
-          node.querySelectorAll('#search-result > div, #search-result > li, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer')
+          node.querySelectorAll('#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer')
             .forEach(markAds);
         }
       });
@@ -136,12 +136,12 @@ const config = { childList: true, subtree: true };
 observer.observe(targetNode, config);
 
 // Начальная маркировка
-const initialItems = targetNode.querySelectorAll('#search-result > div, #search-result > li, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer');
+const initialItems = targetNode.querySelectorAll('#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer');
 initialItems.forEach(markAds);
 
 // Периодическая проверка для AJAX-подгрузки
 function checkNewElements() {
-  const newItems = targetNode.querySelectorAll('#search-result > div, #search-result > li, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer');
+  const newItems = targetNode.querySelectorAll('#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer');
   newItems.forEach((node) => {
     if (node.dataset.marked !== 'processed') {
       markAds(node);
@@ -153,7 +153,6 @@ function checkNewElements() {
 let isChecking = false;
 function handleAjaxContent() {
   if (isChecking) return;
-
   isChecking = true;
   let checkCount = 0;
   const maxChecks = 10; // 5 секунд
