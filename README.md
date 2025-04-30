@@ -39,7 +39,8 @@ https://yandex.ru/search*, https://ya.ru/search*
 
 <h2>Код</h2>
 
-```const myDomains = ['mydomain1.ru', 'mydomain2.com', 'mydomain3.pro'];
+```
+const myDomains = ['mydomain1.ru', 'mydomain2.com', 'mydomain3.pro'];
 
 function markAds(node) {
   if (node.nodeType !== Node.ELEMENT_NODE) return;
@@ -210,7 +211,6 @@ document.addEventListener('scroll', () => {
 function stopObserving() {
   observer.disconnect();
 }
-
 
 
 
