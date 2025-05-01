@@ -34,200 +34,221 @@
 Сам JS-код
 
 ```
-const myDomains = ['mydomain1.ru', 'mydomain2.com', 'mydomain3.pro'];
+(function () {
+  'use strict';
 
-// Список Yandex доменов для проверки рекламы
-const yandexDomains = [
-  'https://yandex.ru/search/',
-  'https://yandex.kz/search/',
-  'https://yandex.by/search/',
-  'https://yandex.com/search/',
-  'https://yandex.uz/search/',
-  'https://yandex.com.tr/search/',
-  'https://yandex.ua/search/'
-];
-
-// Список Yabs доменов для проверки рекламы
-const yabsDomains = [
-  'https://yabs.yandex.ru/count/',
-  'https://yabs.yandex.kz/count/',
-  'https://yabs.yandex.by/count/',
-  'https://yabs.yandex.uz/count/',
-  'https://yabs.yandex.com.tr/count/'
-];
-
-function markAds(node) {
-  if (node.nodeType !== Node.ELEMENT_NODE) return;
-
-  // Проверка релевантных элементов
-  const isSearchResultItem = (
-    node.matches('#search-result > div') ||
-    node.matches('#search-result > li') ||
-    node.matches('#search-result > li > div') ||
-    (node.classList.contains('serp-item') && 
-      (node.classList.contains('serp-item_card') || 
-       node.classList.contains('serp-list__card'))) ||
-    node.matches('[data-ajax-root="true"]') ||
-    node.closest('[data-ajax-root="true"]')
-  );
-
-  if (isSearchResultItem) {
-    let isAd = false;
-    let hasMyDomain = false;
-
-    // Проверка на рекламу по наличию ссылки с Yandex или Yabs доменами
-    const links = node.querySelectorAll('a');
-    for (const link of links) {
-      if (yandexDomains.some(domain => link.href.startsWith(domain)) || 
-          yabsDomains.some(domain => link.href.startsWith(domain))) {
-        isAd = true;
-        break;
-      }
+  // Нормализация доменов
+  function toASCII(domain) {
+    try {
+      return new URL('http://' + domain).hostname.toLowerCase();
+    } catch {
+      return domain.toLowerCase();
     }
-
-    // Проверка доменов, если не реклама
-    if (!isAd) {
-      for (const link of links) {
-        try {
-          const url = new URL(link.href, window.location.origin);
-          const hostname = url.hostname.toLowerCase();
-          if (myDomains.some((domain) => hostname === domain || hostname.endsWith('.' + domain))) {
-            hasMyDomain = true;
-            break;
-          }
-        } catch (e) {
-          // Skip invalid URLs
-        }
-      }
-    }
-
-    // Раскрашивание элемента
-    if (isAd) {
-      node.style.backgroundColor = '#B79900';
-    } else if (hasMyDomain) {
-      node.style.backgroundColor = '#009159';
-    }
-
-    // Обработка вложенных PromoOffer
-    const promoOffers = node.querySelectorAll('.PromoOffer');
-    const color = isAd ? '#B79900' : hasMyDomain ? '#009159' : '';
-    promoOffers.forEach((offer) => {
-      offer.style.backgroundColor = color;
-      offer.dataset.marked = 'processed';
-    });
-
-    // Пометка обработанного элемента
-    node.dataset.marked = 'processed';
   }
 
-  // Обработка корневых PromoOffer
-  if (node.classList.contains('PromoOffer') && node.dataset.marked !== 'processed') {
-    const parentNode = node.closest('#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"]');
-    if (parentNode) {
-      if (parentNode.style.backgroundColor === 'rgb(183, 153, 0)') {
-        node.style.backgroundColor = '#B79900';
-      } else if (parentNode.style.backgroundColor === 'rgb(0, 145, 89)') {
-        node.style.backgroundColor = '#009159';
+  // Список ваших доменов
+  const myDomains = ['mydomain1.ru', 'mydomain2.com', 'mydomain3.pro'].map(toASCII);
+
+  // Список доменов для проверки рекламы (объединяем Yandex и Yabs)
+  const adDomains = [
+    'https://yandex.ru/search/',
+    'https://yandex.kz/search/',
+    'https://yandex.by/search/',
+    'https://yandex.com/search/',
+    'https://yandex.uz/search/',
+    'https://yandex.com.tr/search/',
+    'https://yandex.ua/search/',
+    'https://yabs.yandex.ru/count/',
+    'https://yabs.yandex.kz/count/',
+    'https://yabs.yandex.by/count/',
+    'https://yabs.yandex.uz/count/',
+    'https://yabs.yandex.com.tr/count/'
+  ];
+
+  // Функция маркировки элементов
+  function markAds(node) {
+    if (node.nodeType !== Node.ELEMENT_NODE || node.dataset.marked === 'processed') return;
+
+    // Проверка релевантных элементов
+    const isSearchResultItem = (
+      node.matches('#search-result > div, #search-result > li, #search-result > li > div') ||
+      (node.classList.contains('serp-item') &&
+        (node.classList.contains('serp-item_card') || node.classList.contains('serp-list__card'))) ||
+      node.matches('[data-ajax-root="true"]') ||
+      node.closest('[data-ajax-root="true"]')
+    );
+
+    if (isSearchResultItem) {
+      let isAd = false;
+      let hasMyDomain = false;
+
+      // Проверка на рекламу
+      const links = node.querySelectorAll('a');
+      for (const link of links) {
+        if (adDomains.some(domain => link.href.startsWith(domain))) {
+          isAd = true;
+          break;
+        }
       }
+
+      // Дополнительная проверка на рекламу через метку
+      if (!isAd && node.querySelector('.AdvLabel-Text')) {
+        isAd = true;
+      }
+
+      // Проверка ваших доменов, если не реклама
+      if (!isAd) {
+        for (const link of links) {
+          try {
+            const url = new URL(link.href, window.location.origin);
+            const hostname = url.hostname.toLowerCase();
+            if (myDomains.some(domain => hostname === domain || hostname.endsWith('.' + domain))) {
+              hasMyDomain = true;
+              break;
+            }
+          } catch {
+            // Пропускаем невалидные URL
+          }
+        }
+      }
+
+      // Применение цвета
+      const color = isAd ? '#B79900' : hasMyDomain ? '#009159' : '';
+      if (color) {
+        node.style.backgroundColor = color;
+      }
+
+      // Обработка вложенных PromoOffer
+      node.querySelectorAll('.PromoOffer').forEach((offer) => {
+        if (color) offer.style.backgroundColor = color;
+        offer.dataset.marked = 'processed';
+      });
+
       node.dataset.marked = 'processed';
     }
-  }
-}
 
-// Наблюдение за #search-result
-const targetNode = document.querySelector('#search-result') || document.body;
-const observer = new MutationObserver((mutations) => {
-  mutations.forEach((mutation) => {
-    if (mutation.type === 'childList') {
-      mutation.addedNodes.forEach((node) => {
-        markAds(node);
-        // Обработка вложенных элементов
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          node.querySelectorAll('#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer')
-            .forEach(markAds);
+    // Обработка корневых PromoOffer
+    if (node.classList.contains('PromoOffer') && node.dataset.marked !== 'processed') {
+      const parentNode = node.closest(
+        '#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"]'
+      );
+      if (parentNode) {
+        const bg = getComputedStyle(parentNode).backgroundColor;
+        if (bg === 'rgb(183, 153, 0)') {
+          node.style.backgroundColor = '#B79900';
+        } else if (bg === 'rgb(0, 145, 89)') {
+          node.style.backgroundColor = '#009159';
+        }
+        node.dataset.marked = 'processed';
+      }
+    }
+  }
+
+  // Функция для маркировки всех релевантных элементов
+  function markAll() {
+    const selector = '#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer';
+    document.querySelectorAll(selector).forEach(markAds);
+  }
+
+  // Настройка MutationObserver
+  function setupObserver() {
+    const container = document.querySelector('#search-result') || document.body;
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              markAds(node);
+              node.querySelectorAll(
+                '#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer'
+              ).forEach(markAds);
+            }
+          });
         }
       });
-    }
-  });
-});
-
-// Настройка наблюдения
-const config = { childList: true, subtree: true };
-observer.observe(targetNode, config);
-
-// Начальная маркировка
-const initialItems = targetNode.querySelectorAll('#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer');
-initialItems.forEach(markAds);
-
-// Периодическая проверка для AJAX-подгрузки
-function checkNewElements() {
-  const newItems = targetNode.querySelectorAll('#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"], .PromoOffer');
-  newItems.forEach((node) => {
-    if (node.dataset.marked !== 'processed') {
-      markAds(node);
-    }
-  });
-}
-
-// Обработка AJAX-подгрузки
-let isChecking = false;
-function handleAjaxContent() {
-  if (isChecking) return;
-  isChecking = true;
-  let checkCount = 0;
-  const maxChecks = 10; // 5 секунд
-  const checkInterval = 500;
-
-  const interval = setInterval(() => {
-    checkNewElements();
-    checkCount++;
-    if (checkCount >= maxChecks) {
-      clearInterval(interval);
-      isChecking = false;
-    }
-  }, checkInterval);
-}
-
-// Обработка событий
-document.addEventListener('click', (event) => {
-  if (event.target.matches('a, button, [role="button"], .serp-item, .serp-item_card, .serp-list__card, [data-ajax-trigger], [data-load-more]')) {
-    handleAjaxContent();
+    });
+    observer.observe(container, { childList: true, subtree: true });
+    return observer;
   }
-});
 
-document.addEventListener('scroll', () => {
-  if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 100) {
-    handleAjaxContent();
+  // Периодическая проверка для AJAX-подгрузки
+  function triggerCheck() {
+    let count = 0;
+    const maxChecks = 10; // 5 секунд
+    const interval = setInterval(() => {
+      markAll();
+      if (++count >= maxChecks) clearInterval(interval);
+    }, 500);
   }
-});
 
-// Перехват AJAX-запросов
-(function () {
-  if (window.jQuery) {
-    const originalAjax = jQuery.ajax;
-    jQuery.ajax = function () {
-      const promise = originalAjax.apply(this, arguments);
-      promise.done(() => setTimeout(handleAjaxContent, 100));
+  // Перехват AJAX-запросов
+  function hookAjax() {
+    // Перехват fetch
+    const originalFetch = window.fetch;
+    window.fetch = function () {
+      const promise = originalFetch.apply(this, arguments);
+      promise.then(() => setTimeout(triggerCheck, 100));
       return promise;
+    };
+
+    // Перехват XMLHttpRequest
+    const originalOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function () {
+      this.addEventListener('load', () => setTimeout(triggerCheck, 100));
+      return originalOpen.apply(this, arguments);
+    };
+
+    // Перехват jQuery.ajax
+    if (window.jQuery) {
+      const originalAjax = jQuery.ajax;
+      jQuery.ajax = function () {
+        const promise = originalAjax.apply(this, arguments);
+        promise.done(() => setTimeout(triggerCheck, 100));
+        return promise;
+      };
+    }
+  }
+
+  // Обработка событий
+  function setupEventListeners() {
+    document.addEventListener('click', (event) => {
+      if (event.target.closest('a, button, [role="button"], .serp-item, .serp-item_card, .serp-list__card, [data-ajax-trigger], [data-load-more]')) {
+        triggerCheck();
+      }
+    });
+
+    document.addEventListener('scroll', () => {
+      if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 100) {
+        triggerCheck();
+      }
+    });
+  }
+
+  // Запуск скрипта
+  function start() {
+    const observer = setupObserver();
+    markAll();
+    hookAjax();
+    setupEventListeners();
+
+    // Функция для остановки наблюдения
+    window.stopObserving = function () {
+      observer.disconnect();
     };
   }
 
-  const originalFetch = window.fetch;
-  window.fetch = function () {
-    const promise = originalFetch.apply(this, arguments);
-    promise.then(() => setTimeout(handleAjaxContent, 100));
-    return promise;
-  };
+  // Ожидание загрузки #search-result
+  const waitInterval = setInterval(() => {
+    if (document.querySelector('#search-result')) {
+      clearInterval(waitInterval);
+      start();
+    }
+  }, 300);
 
-  const originalOpen = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function () {
-    this.addEventListener('load', () => setTimeout(handleAjaxContent, 100));
-    return originalOpen.apply(this, arguments);
-  };
+  // Таймаут на случай, если #search-result не появится
+  setTimeout(() => {
+    clearInterval(waitInterval);
+    start();
+  }, 5000);
 })();
-
-// Функция для остановки наблюдения
-function stopObserving() {
-  observer.disconnect();
-}
 
