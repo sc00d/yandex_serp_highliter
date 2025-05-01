@@ -42,6 +42,24 @@ https://yandex.ru/search*, https://ya.ru/search*
 ```
 const myDomains = ['mydomain1.ru', 'mydomain2.com', 'mydomain3.pro'];
 
+// Список Yandex доменов для проверки рекламы
+const yandexDomains = [
+  'https://yandex.ru/search/',
+  'https://yandex.kz/search/',
+  'https://yandex.by/search/',
+  'https://yandex.com/search/',
+  'https://yandex.uz/search/',
+  'https://yandex.com.tr/search/'
+];
+
+// Список Yabs доменов для проверки рекламы
+const yabsDomains = [
+  'https://yabs.yandex.kz/count/',
+  'https://yabs.yandex.by/count/',
+  'https://yabs.yandex.uz/count/',
+  'https://yabs.yandex.com.tr/count/'
+];
+
 function markAds(node) {
   if (node.nodeType !== Node.ELEMENT_NODE) return;
 
@@ -61,10 +79,11 @@ function markAds(node) {
     let isAd = false;
     let hasMyDomain = false;
 
-    // Проверка на рекламу по наличию ссылки с https://yandex.ru/search/
+    // Проверка на рекламу по наличию ссылки с Yandex или Yabs доменами
     const links = node.querySelectorAll('a');
     for (const link of links) {
-      if (link.href.startsWith('https://yandex.ru/search/')) {
+      if (yandexDomains.some(domain => link.href.startsWith(domain)) || 
+          yabsDomains.some(domain => link.href.startsWith(domain))) {
         isAd = true;
         break;
       }
@@ -215,6 +234,4 @@ document.addEventListener('scroll', () => {
 function stopObserving() {
   observer.disconnect();
 }
-
-
 
