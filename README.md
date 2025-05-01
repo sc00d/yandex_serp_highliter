@@ -34,6 +34,7 @@
 Сам JS-код
 
 ```
+
 (function () {
   'use strict';
 
@@ -52,6 +53,7 @@
   // Список доменов для проверки рекламы (объединяем Yandex и Yabs)
   const adDomains = [
     'https://yandex.ru/search/',
+    'https://ya.ru/search/',
     'https://yandex.kz/search/',
     'https://yandex.by/search/',
     'https://yandex.com/search/',
@@ -59,6 +61,7 @@
     'https://yandex.com.tr/search/',
     'https://yandex.ua/search/',
     'https://yabs.yandex.ru/count/',
+    'https://yabs.ya.ru/count/',
     'https://yabs.yandex.kz/count/',
     'https://yabs.yandex.by/count/',
     'https://yabs.yandex.uz/count/',
@@ -251,4 +254,3 @@
     start();
   }, 5000);
 })();
-
