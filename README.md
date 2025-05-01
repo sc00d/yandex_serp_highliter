@@ -12,19 +12,6 @@
 Решение для тех, кому надоело всматриваться в невидимые подписи "Реклама", (а теперь и значки ₽), которые притаились за хлебным крошками или где-то в углу. 
 Со скриптом удобно смотреть где этот ваш "ТОП-10" органики находится в реальности у юзера и понимать почему CTR такой низкий =(
 
-<h2>Как пользоваться?</h2>
-Удобней всего использовать расширение https://chromewebstore.google.com/detail/user-javascript-and-css/nbhcbdghjpllgmfilhnhkllmkecfmpld
-
-Добавляем новое правило для URL Pattern: 
-https://yandex.ru/search*, https://ya.ru/search*
-
-Чтобы код заработал через расширение - надо разрешить "Запуск на старте" (внизу поля с JS кодом крайний правый значек)
-
-![image](https://github.com/user-attachments/assets/87c6bc60-d1d5-45c1-b4fa-75435849f980)
-
-
-Код вставляем в поле с JavaScript, сохраняем, наслаждаемся
-
 — Работает в Моб и ПК выдаче
 — Маркирует рекламу, которая появляется внутри органики при клике по одному из результатов
 
@@ -35,9 +22,16 @@ https://yandex.ru/search*, https://ya.ru/search*
 Автор: https://t.me/sc00d
 Канал: https://t.me/seregaseo
 
-***
+<h2>Как пользоваться?</h2>
+Удобней всего использовать расширение https://chromewebstore.google.com/detail/user-javascript-and-css/nbhcbdghjpllgmfilhnhkllmkecfmpld
 
-<h2>Код</h2>
+Добавляем новое правило для URL Pattern: 
+<code>https://yandex.ru/search*, https://ya.ru/search*, https://yandex.kz/search*, https://yandex.by/search*, https://yandex.uz/search*, https://yandex.com/search*, https://yandex.com.tr/search*, https://ya.ru/search*</code>
+
+Код вставляем в поле с JavaScript, сохраняем, наслаждаемся
+
+
+Сам JS-код
 
 ```
 const myDomains = ['mydomain1.ru', 'mydomain2.com', 'mydomain3.pro'];
