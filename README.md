@@ -43,11 +43,13 @@ const yandexDomains = [
   'https://yandex.by/search/',
   'https://yandex.com/search/',
   'https://yandex.uz/search/',
-  'https://yandex.com.tr/search/'
+  'https://yandex.com.tr/search/',
+  'https://yandex.ua/search/'
 ];
 
 // Список Yabs доменов для проверки рекламы
 const yabsDomains = [
+  'https://yabs.yandex.ru/count/',
   'https://yabs.yandex.kz/count/',
   'https://yabs.yandex.by/count/',
   'https://yabs.yandex.uz/count/',
