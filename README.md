@@ -58,14 +58,13 @@ function markAds(node) {
   );
 
   if (isSearchResultItem) {
-    let isAd = false; // Исправлено: убрано лишнее '='
+    let isAd = false;
     let hasMyDomain = false;
 
-    // Проверка на рекламу (еклама, ₽ или Промо, исключая span внутри .Price)
-    const spans = node.querySelectorAll('span:not(.Price span)');
-    for (const span of spans) {
-      const text = span.textContent;
-      if (text.includes('еклама') || (text.includes('₽') && !span.closest('.Price')) || text.includes('Промо')) {
+    // Проверка на рекламу по наличию ссылки с https://yandex.ru/search/
+    const links = node.querySelectorAll('a');
+    for (const link of links) {
+      if (link.href.startsWith('https://yandex.ru/search/')) {
         isAd = true;
         break;
       }
@@ -73,11 +72,16 @@ function markAds(node) {
 
     // Проверка доменов, если не реклама
     if (!isAd) {
-      const links = node.querySelectorAll('a');
       for (const link of links) {
-        if (myDomains.some((domain) => link.href.includes(domain))) {
-          hasMyDomain = true;
-          break;
+        try {
+          const url = new URL(link.href, window.location.origin);
+          const hostname = url.hostname.toLowerCase();
+          if (myDomains.some((domain) => hostname === domain || hostname.endsWith('.' + domain))) {
+            hasMyDomain = true;
+            break;
+          }
+        } catch (e) {
+          // Skip invalid URLs
         }
       }
     }
