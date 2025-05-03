@@ -86,7 +86,7 @@
       let hasMyDomain = false;
 
       // Проверка на рекламу
-      const links = node.querySelectorAll('a');
+      const links = node.querySelectorAll('a:not(.MissingWords a)');
       for (const link of links) {
         if (adDomains.some(domain => link.href.startsWith(domain))) {
           isAd = true;
