@@ -26,7 +26,12 @@
 Удобней всего использовать расширение https://chromewebstore.google.com/detail/user-javascript-and-css/nbhcbdghjpllgmfilhnhkllmkecfmpld
 
 Добавляем новое правило для URL Pattern: 
-<code>https://yandex.ru/search*, https://ya.ru/search*, https://yandex.kz/search*, https://yandex.by/search*, https://yandex.uz/search*, https://yandex.com/search*, https://yandex.com.tr/search*, https://ya.ru/search*</code>
+<code>
+
+https://www.yandex.ru/*, https://www.ya.ru/search*, https://www.yandex.kz/search*, https://www.yandex.by/search*, https://www.yandex.uz/search*, https://www.yandex.com/search*, https://www.yandex.com.tr/search*, https://www.ya.ru/search*, https://yandex.ru/*, https://ya.ru/search*, https://yandex.kz/search*, https://yandex.by/search*, https://yandex.uz/search*, https://yandex.com/search*, https://yandex.com.tr/search*, https://ya.ru/search*
+
+
+</code>
 
 Код вставляем в поле с JavaScript, сохраняем, наслаждаемся
 
@@ -50,7 +55,7 @@
   // Список ваших доменов
   const myDomains = ['mydomain1.ru', 'mydomain2.com', 'mydomain3.pro'].map(toASCII);
 
-  // Список доменов для проверки рекламы (объединяем Yandex и Yabs)
+  // Список доменов для проверки рекламы
   const adDomains = [
     'https://yandex.ru/search/',
     'https://ya.ru/search/',
@@ -65,7 +70,21 @@
     'https://yabs.yandex.kz/count/',
     'https://yabs.yandex.by/count/',
     'https://yabs.yandex.uz/count/',
-    'https://yabs.yandex.com.tr/count/'
+    'https://yabs.yandex.com.tr/count/',
+    'https://www.yandex.ru/search/',
+    'https://www.ya.ru/search/',
+    'https://www.yandex.kz/search/',
+    'https://www.yandex.by/search/',
+    'https://www.yandex.com/search/',
+    'https://www.yandex.uz/search/',
+    'https://www.yandex.com.tr/search/',
+    'https://www.yandex.ua/search/',
+    'https://www.yabs.yandex.ru/count/',
+    'https://www.yabs.ya.ru/count/',
+    'https://www.yabs.yandex.kz/count/',
+    'https://www.yabs.yandex.by/count/',
+    'https://www.yabs.yandex.uz/count/',
+    'https://www.yabs.yandex.com.tr/count/'
   ];
 
   // Функция маркировки элементов
@@ -82,6 +101,13 @@
     );
 
     if (isSearchResultItem) {
+      // Проверка, находится ли элемент внутри div с классами complementary, content__right или любым data-fast-subtype
+      const isExcluded = node.closest('.complementary, .content__right, [data-fast-subtype]');
+      if (isExcluded) {
+        node.dataset.marked = 'processed';
+        return; // Пропускаем маркировку
+      }
+
       let isAd = false;
       let hasMyDomain = false;
 
@@ -136,11 +162,15 @@
         '#search-result > div, #search-result > li, #search-result > li > div, .serp-item.serp-item_card, .serp-item.serp-list__card, [data-ajax-root="true"]'
       );
       if (parentNode) {
-        const bg = getComputedStyle(parentNode).backgroundColor;
-        if (bg === 'rgb(183, 153, 0)') {
-          node.style.backgroundColor = '#B79900';
-        } else if (bg === 'rgb(0, 145, 89)') {
-          node.style.backgroundColor = '#009159';
+        // Проверка исключений для PromoOffer
+        const isExcluded = parentNode.closest('.complementary, .content__right, [data-fast-subtype]');
+        if (!isExcluded) {
+          const bg = getComputedStyle(parentNode).backgroundColor;
+          if (bg === 'rgb(183, 153, 0)') {
+            node.style.backgroundColor = '#B79900';
+          } else if (bg === 'rgb(0, 145, 89)') {
+            node.style.backgroundColor = '#009159';
+          }
         }
         node.dataset.marked = 'processed';
       }
@@ -186,7 +216,6 @@
 
   // Перехват AJAX-запросов
   function hookAjax() {
-    // Перехват fetch
     const originalFetch = window.fetch;
     window.fetch = function () {
       const promise = originalFetch.apply(this, arguments);
@@ -194,14 +223,12 @@
       return promise;
     };
 
-    // Перехват XMLHttpRequest
     const originalOpen = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open = function () {
       this.addEventListener('load', () => setTimeout(triggerCheck, 100));
       return originalOpen.apply(this, arguments);
     };
 
-    // Перехват jQuery.ajax
     if (window.jQuery) {
       const originalAjax = jQuery.ajax;
       jQuery.ajax = function () {
@@ -234,7 +261,6 @@
     hookAjax();
     setupEventListeners();
 
-    // Функция для остановки наблюдения
     window.stopObserving = function () {
       observer.disconnect();
     };
